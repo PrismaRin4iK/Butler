@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { selectButlerRecommendation } from '@/lib/butler/engine';
-import { BacklogItem, EnergyLevel, ItemType, RecommendRequest } from '@/types';
+import { createClient } from '../../../../lib/supabase/server';
+import { createAdminClient } from '../../../../lib/supabase/admin';
+import { selectButlerRecommendation } from '../../../../lib/butler/engine';
+import { BacklogItem, EnergyLevel, ItemType, RecommendRequest } from '../../../../types';
 
 export async function POST(request: NextRequest) {
   try {

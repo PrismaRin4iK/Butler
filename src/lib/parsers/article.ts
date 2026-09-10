@@ -1,6 +1,6 @@
 import { extract } from '@extractus/article-extractor';
 import * as cheerio from 'cheerio';
-import { ArticleMetadata } from '@/types';
+import { ArticleMetadata } from '../../types';
 
 export function isHttpUrl(input: string): boolean {
   try {

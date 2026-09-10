@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { EnergyLevel, ItemType } from '@/types';
+import { EnergyLevel, ItemType } from '../../types';
 
 export interface AIEnrichmentResult {
   energy_level: EnergyLevel;

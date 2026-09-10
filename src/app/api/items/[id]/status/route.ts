@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
-import { ItemStatus } from '@/types';
+import { createClient } from '../../../../../lib/supabase/server';
+import { createAdminClient } from '../../../../../lib/supabase/admin';
+import { ItemStatus } from '../../../../../types';
 
 export async function PATCH(
   request: NextRequest,

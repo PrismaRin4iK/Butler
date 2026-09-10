@@ -1,4 +1,4 @@
-import { YouTubeMetadata } from '@/types';
+import { YouTubeMetadata } from '../../types';
 
 export function isYouTubeUrl(input: string): boolean {
   try {
