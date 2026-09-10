@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Sparkles, BatteryCharging, BatteryLow, BatteryMedium, SquarePlay, BookOpen, CheckSquare, Layers, Clock } from 'lucide-react';
-import { EnergyLevel, ItemType } from '@/types';
+import { EnergyLevel, ItemType } from '../types';
 
 interface ButlerDeskProps {
   availableMinutes: number;

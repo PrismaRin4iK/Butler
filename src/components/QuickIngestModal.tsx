@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { Plus, X, Link, SquarePlay, BookOpen, CheckSquare, Sparkles, Clock, AlertCircle } from 'lucide-react';
-import { isYouTubeUrl } from '@/lib/parsers/youtube';
-import { isHttpUrl } from '@/lib/parsers/article';
-import { ItemType } from '@/types';
+import { isYouTubeUrl } from '../lib/parsers/youtube';
+import { isHttpUrl } from '../lib/parsers/article';
+import { ItemType } from '../types';
 
 interface QuickIngestModalProps {
   isOpen: boolean;

@@ -15,8 +15,8 @@ import {
   ExternalLink,
   Filter,
 } from 'lucide-react';
-import { BacklogItem, ItemStatus, ItemType } from '@/types';
-import { formatMinutes } from '@/lib/utils';
+import { BacklogItem, ItemStatus, ItemType } from '../types';
+import { formatMinutes } from '../lib/utils';
 import { ReaderModal } from './ReaderModal';
 
 interface StorageArchiveModalProps {
@@ -95,7 +95,7 @@ export function StorageArchiveModal({ isOpen, onClose, onDataChanged }: StorageA
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     const matchesTitle = item.title.toLowerCase().includes(q);
-    const matchesTags = item.tags.some((t) => t.toLowerCase().includes(q));
+    const matchesTags = item.tags ? item.tags.some((t: string) => t.toLowerCase().includes(q)) : false;
     return matchesTitle || matchesTags;
   });
 
@@ -242,7 +242,7 @@ export function StorageArchiveModal({ isOpen, onClose, onDataChanged }: StorageA
                       </span>
                       <span>•</span>
                       <span className="capitalize">{item.energy_level} энергия</span>
-                      {item.tags?.map((t, idx) => (
+                      {item.tags?.map((t: string, idx: number) => (
                         <span key={idx} className="text-slate-400">
                           #{t}
                         </span>

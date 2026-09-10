@@ -13,10 +13,10 @@ import {
   ExternalLink,
   ArrowLeft,
 } from 'lucide-react';
-import { BacklogItem, YouTubeMetadata, ArticleMetadata } from '@/types';
+import { BacklogItem, YouTubeMetadata, ArticleMetadata } from '../types';
 import { TaskTimer } from './TaskTimer';
 import { ReaderModal } from './ReaderModal';
-import { formatMinutes } from '@/lib/utils';
+import { formatMinutes } from '../lib/utils';
 
 interface FocusCardProps {
   item: BacklogItem;
@@ -162,7 +162,7 @@ export function FocusCard({
         {/* Tags */}
         {item.tags && item.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-5">
-            {item.tags.map((tag, idx) => (
+            {item.tags.map((tag: string, idx: number) => (
               <span
                 key={idx}
                 className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-medium"

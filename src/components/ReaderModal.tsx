@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { X, ExternalLink, BookOpen, Type } from 'lucide-react';
-import { BacklogItem, ArticleMetadata } from '@/types';
-import { formatMinutes } from '@/lib/utils';
+import { BacklogItem, ArticleMetadata } from '../types';
+import { formatMinutes } from '../lib/utils';
 
 interface ReaderModalProps {
   item: BacklogItem | null;

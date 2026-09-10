@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Sparkles, Inbox, RefreshCw, AlertTriangle } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { ButlerDesk } from '@/components/ButlerDesk';
-import { FocusCard } from '@/components/FocusCard';
-import { QuickIngestModal } from '@/components/QuickIngestModal';
-import { StorageArchiveModal } from '@/components/StorageArchiveModal';
-import { BacklogItem, EnergyLevel, ItemType, RecommendResponse } from '@/types';
+import { Header } from '../components/Header';
+import { ButlerDesk } from '../components/ButlerDesk';
+import { FocusCard } from '../components/FocusCard';
+import { QuickIngestModal } from '../components/QuickIngestModal';
+import { StorageArchiveModal } from '../components/StorageArchiveModal';
+import { BacklogItem, EnergyLevel, ItemType, RecommendResponse } from '../types';
 
 export default function HomePage() {
   // Butler Desk Configuration State
