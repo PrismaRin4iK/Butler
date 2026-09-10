@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id || '00000000-0000-0000-0000-000000000000';
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let query: any = supabase
       .from('backlog_items')
       .select('*')
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (error || !items) {
       const admin = createAdminClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       let adminQuery: any = admin
         .from('backlog_items')
         .select('*')

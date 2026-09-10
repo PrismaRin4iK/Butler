@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     const userId = user?.id || '00000000-0000-0000-0000-000000000000';
 
     // Fetch inbox candidates from database
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let query: any = supabase
       .from('backlog_items')
       .select('*')
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Fallback to admin client if RLS blocked unauthenticated guest query
     if (error || !items) {
       const admin = createAdminClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       let adminQuery: any = admin
         .from('backlog_items')
         .select('*')
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     // Update last_suggested_at timestamp
     const nowIso = new Date().toISOString();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     await (supabase.from('backlog_items') as any)
       .update({ last_suggested_at: nowIso })
       .eq('id', recommendation.item.id);
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     // Also update via admin in case user is guest
     try {
       const admin = createAdminClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       await (admin.from('backlog_items') as any)
         .update({ last_suggested_at: nowIso })
         .eq('id', recommendation.item.id);

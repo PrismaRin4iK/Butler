@@ -22,7 +22,7 @@ export async function PATCH(
 
     const supabase = await createClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let res = await (supabase.from('backlog_items') as any)
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', id)
@@ -31,7 +31,7 @@ export async function PATCH(
 
     if (res.error) {
       const admin = createAdminClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       res = await (admin.from('backlog_items') as any)
         .update({ status, updated_at: new Date().toISOString() })
         .eq('id', id)
@@ -63,12 +63,12 @@ export async function DELETE(
     const { id } = await context.params;
     const supabase = await createClient();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let res = await (supabase.from('backlog_items') as any).delete().eq('id', id);
 
     if (res.error) {
       const admin = createAdminClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       res = await (admin.from('backlog_items') as any).delete().eq('id', id);
     }
 

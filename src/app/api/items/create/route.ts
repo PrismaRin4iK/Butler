@@ -161,12 +161,12 @@ export async function POST(request: NextRequest) {
     let insertedData = null;
     let insertError = null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const res = await (supabase.from('backlog_items') as any).insert(itemsToInsert).select();
     if (res.error) {
       // Fallback to admin client if RLS blocked unauthenticated dev request
       const admin = createAdminClient();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       const adminRes = await (admin.from('backlog_items') as any).insert(itemsToInsert).select();
       insertedData = adminRes.data;
       insertError = adminRes.error;
