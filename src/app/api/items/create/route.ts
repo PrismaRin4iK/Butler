@@ -5,12 +5,18 @@ import { getEffectiveUserId } from '../../../../lib/supabase/auth-helper';
 import { isYouTubeUrl, extractYouTubeVideoId, extractYouTubePlaylistId, fetchYouTubeVideoInfo, fetchYouTubePlaylistVideos } from '../../../../lib/parsers/youtube';
 import { isHttpUrl, parseArticle } from '../../../../lib/parsers/article';
 import { enrichItemWithAI } from '../../../../lib/ai/groq';
-import { BacklogItemInsert, ItemType, Json } from '../../../../types/database';
+import { BacklogItemInsert, EnergyLevel, ItemType, Json } from '../../../../types/database';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { input, customMinutes, type: explicitType, rawContent: explicitRawContent } = body;
+    const {
+      input,
+      customMinutes,
+      type: explicitType,
+      rawContent: explicitRawContent,
+      energyLevel: explicitEnergyLevel,
+    } = body;
 
     if (!input || typeof input !== 'string' || input.trim().length === 0) {
       return NextResponse.json(
@@ -162,6 +168,10 @@ export async function POST(request: NextRequest) {
       });
 
       const finalMinutes = initialMinutes || aiData.estimated_minutes || 15;
+      const finalEnergy =
+        explicitEnergyLevel && ['low', 'medium', 'high'].includes(explicitEnergyLevel)
+          ? (explicitEnergyLevel as EnergyLevel)
+          : aiData.energy_level;
 
       itemsToInsert.push({
         user_id: userId,
@@ -171,7 +181,7 @@ export async function POST(request: NextRequest) {
         raw_content: explicitRawContent || null,
         source_metadata: { notes: explicitRawContent || '' } as unknown as Json,
         estimated_minutes: finalMinutes,
-        energy_level: aiData.energy_level,
+        energy_level: finalEnergy,
         ai_summary: aiData.ai_summary,
         tags: aiData.tags,
         status: 'inbox',

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, X, Link, SquarePlay, BookOpen, CheckSquare, Sparkles, Clock, AlertCircle } from 'lucide-react';
 import { isYouTubeUrl } from '../lib/parsers/youtube';
 import { isHttpUrl } from '../lib/parsers/article';
-import { ItemType } from '../types';
+import { ItemType, EnergyLevel } from '../types';
 
 interface QuickIngestModalProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ interface QuickIngestModalProps {
 export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngestModalProps) {
   const [input, setInput] = useState('');
   const [customMinutes, setCustomMinutes] = useState<number | undefined>(undefined);
+  const [customEnergy, setCustomEnergy] = useState<EnergyLevel | undefined>(undefined);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +54,7 @@ export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngest
         body: JSON.stringify({
           input: trimmed,
           customMinutes: isTask ? customMinutes : undefined,
+          energyLevel: isTask ? customEnergy : undefined,
           rawContent: isTask && notes.trim() ? notes.trim() : undefined,
           type: detectedType !== 'unknown' ? detectedType : undefined,
         }),
@@ -67,6 +69,7 @@ export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngest
       setInput('');
       setNotes('');
       setCustomMinutes(undefined);
+      setCustomEnergy(undefined);
       onClose();
       onItemCreated();
     } catch (err: unknown) {
@@ -190,6 +193,51 @@ export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngest
                   ? `Выбрано ${customMinutes} мин.`
                   : 'Если не выбрать, Groq AI оценит длительность автоматически.'}
               </p>
+
+              {/* Energy / Difficulty Selector */}
+              <div className="mt-3">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center justify-between">
+                  <span>Сложность задачи</span>
+                  <span className="text-[11px] text-slate-500 font-normal lowercase">
+                    {customEnergy ? '' : 'автооценка через ИИ'}
+                  </span>
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCustomEnergy(customEnergy === 'low' ? undefined : 'low')}
+                    className={`min-h-[42px] py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center cursor-pointer ${
+                      customEnergy === 'low'
+                        ? 'bg-sky-500 text-slate-950 border-sky-400 shadow-sm'
+                        : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    Легко
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomEnergy(customEnergy === 'medium' ? undefined : 'medium')}
+                    className={`min-h-[42px] py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center cursor-pointer ${
+                      customEnergy === 'medium'
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-sm'
+                        : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    В норме
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomEnergy(customEnergy === 'high' ? undefined : 'high')}
+                    className={`min-h-[42px] py-2 px-3 rounded-xl text-xs font-semibold border transition-all flex items-center justify-center cursor-pointer ${
+                      customEnergy === 'high'
+                        ? 'bg-rose-500 text-slate-950 border-rose-400 shadow-sm'
+                        : 'bg-slate-950/50 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    Трудно
+                  </button>
+                </div>
+              </div>
 
               {/* Optional task notes */}
               <div className="mt-3">

@@ -26,6 +26,7 @@ export interface CreateItemPayload {
   input: string; // URL or task title
   type?: ItemType;
   customMinutes?: number;
+  energyLevel?: EnergyLevel;
   rawContent?: string;
 }
 
@@ -33,6 +34,7 @@ export interface RecommendRequest {
   availableMinutes: number; // e.g. 10, 20, 45, 60
   energyState: EnergyLevel; // 'low' | 'medium' | 'high'
   preferredType?: 'all' | ItemType;
+  excludeIds?: string[];
 }
 
 export interface RecommendResponse {

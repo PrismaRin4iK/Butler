@@ -20,13 +20,31 @@ export interface ScoredItem {
 export function calculateItemScore(item: BacklogItem, targetEnergy: EnergyLevel): ScoredItem {
   let energyScore = 0;
 
-  if (item.energy_level === targetEnergy) {
-    energyScore = 50;
-  } else if (
-    (targetEnergy === 'medium' && item.energy_level === 'low') ||
-    (targetEnergy === 'high' && item.energy_level === 'medium')
-  ) {
-    energyScore = 20;
+  if (targetEnergy === 'low') {
+    if (item.energy_level === 'low') {
+      energyScore = 60; // Perfect match for tired user
+    } else if (item.energy_level === 'medium') {
+      energyScore = 0; // Allowed only as fallback when no low items exist
+    } else {
+      energyScore = -1000; // High energy tasks strictly prohibited for an exhausted user
+    }
+  } else if (targetEnergy === 'medium') {
+    if (item.energy_level === 'medium') {
+      energyScore = 50; // Exact match for normal pacing
+    } else if (item.energy_level === 'low') {
+      energyScore = 25; // Light relaxation is totally fine
+    } else {
+      energyScore = -40; // High energy tasks require full alertness, discourage on medium
+    }
+  } else {
+    // targetEnergy === 'high'
+    if (item.energy_level === 'high') {
+      energyScore = 70; // Capitalize on peak energy: tackle the hardest tasks!
+    } else if (item.energy_level === 'medium') {
+      energyScore = 30; // Useful productive work
+    } else {
+      energyScore = -15; // Don't waste peak energy on passive memes or procrastination
+    }
   }
 
   // Penalty for repeat suggestions in the last 24 hours
@@ -69,12 +87,21 @@ export function selectButlerRecommendation(
     // Only items in inbox
     if (item.status !== 'inbox') return false;
 
-    // Time budget filter
+    // Filter out excluded items (e.g. current item when skipping)
+    if (params.excludeIds && params.excludeIds.includes(item.id)) return false;
+
+    // Time budget filter: cannot exceed user's available window
     if (item.estimated_minutes > params.availableMinutes) return false;
 
     // Preferred type filter (if specified and not 'all')
     if (params.preferredType && params.preferredType !== 'all') {
       if (item.type !== params.preferredType) return false;
+    }
+
+    // STRICT HUMAN-CENTRIC SAFETY FILTER:
+    // If the user is exhausted (low energy), NEVER recommend high-energy / heavy tasks!
+    if (params.energyState === 'low' && item.energy_level === 'high') {
+      return false;
     }
 
     return true;
@@ -84,10 +111,27 @@ export function selectButlerRecommendation(
     return null;
   }
 
-  // 2. Score candidate items
-  const scored = candidates.map((item) => calculateItemScore(item, params.energyState));
+  // 2. Strict Energy Hierarchy:
+  // When user is tired ('low'), ALWAYS prefer 'low' energy items if any exist.
+  // Never give a 'medium' task to a tired user if there are 'low' energy options!
+  let pool = candidates;
+  if (params.energyState === 'low') {
+    const lowEnergyCandidates = candidates.filter((item) => item.energy_level === 'low');
+    if (lowEnergyCandidates.length > 0) {
+      pool = lowEnergyCandidates;
+    }
+  } else if (params.energyState === 'high') {
+    // When user is energized ('high'), prioritize 'high' energy items if any exist!
+    const highEnergyCandidates = candidates.filter((item) => item.energy_level === 'high');
+    if (highEnergyCandidates.length > 0) {
+      pool = highEnergyCandidates;
+    }
+  }
 
-  // 3. Sort by score descending (if tied, prefer older items or randomized tiebreak)
+  // 3. Score candidate items
+  const scored = pool.map((item) => calculateItemScore(item, params.energyState));
+
+  // 4. Sort by score descending (if tied, prefer older items or randomized tiebreak)
   scored.sort((a, b) => {
     if (b.score !== a.score) {
       return b.score - a.score;
