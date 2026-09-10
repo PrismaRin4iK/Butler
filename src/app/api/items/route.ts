@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../lib/supabase/server';
 import { createAdminClient } from '../../../lib/supabase/admin';
-import { getEffectiveUserId } from '../../../lib/supabase/auth-helper';
+import { getEffectiveUserContext } from '../../../lib/supabase/auth-helper';
 import { BacklogItem } from '../../../types';
 
 export async function GET(request: NextRequest) {
@@ -11,11 +11,9 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const tag = searchParams.get('tag');
 
-    const supabase = await createClient();
-    const userId = await getEffectiveUserId();
+    const { userId, client } = await getEffectiveUserContext();
 
-     
-    let query: any = supabase
+    let query: any = client
       .from('backlog_items')
       .select('*')
       .eq('user_id', userId)
@@ -31,33 +29,7 @@ export async function GET(request: NextRequest) {
       query = query.contains('tags', [tag]);
     }
 
-    const { data: initialData, error: initialError } = await query;
-    let items: BacklogItem[] | null = initialData as BacklogItem[] | null;
-    let error = initialError;
-
-    if (error || !items) {
-      const admin = createAdminClient();
-       
-      let adminQuery: any = admin
-        .from('backlog_items')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (status && status !== 'all') {
-        adminQuery = adminQuery.eq('status', status);
-      }
-      if (type && type !== 'all') {
-        adminQuery = adminQuery.eq('type', type);
-      }
-      if (tag) {
-        adminQuery = adminQuery.contains('tags', [tag]);
-      }
-
-      const adminRes = await adminQuery;
-      items = adminRes.data as BacklogItem[] | null;
-      error = adminRes.error;
-    }
+    const { data: items, error } = await query;
 
     if (error) {
       return NextResponse.json({ error: 'Ошибка получения списка' }, { status: 500 });

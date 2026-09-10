@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
     // 1. Get authenticated or guest user ID
     const userId = await getEffectiveUserId();
 
+    const normalizedUrl = trimmedInput.startsWith('http://') || trimmedInput.startsWith('https://')
+      ? trimmedInput
+      : `https://${trimmedInput}`;
+
     // 2. Identify content type and parse
     const itemsToInsert: BacklogItemInsert[] = [];
 
@@ -56,6 +60,27 @@ export async function POST(request: NextRequest) {
               status: 'inbox',
             });
           }
+        } else {
+          // If no API key or empty playlist, create an item for the playlist itself
+          const title = `Плейлист YouTube (${playlistId})`;
+          const aiData = await enrichItemWithAI({
+            title,
+            type: 'youtube',
+            estimatedMinutes: 30,
+          });
+
+          itemsToInsert.push({
+            user_id: userId,
+            type: 'youtube',
+            title,
+            url: `https://www.youtube.com/playlist?list=${playlistId}`,
+            source_metadata: { playlist_id: playlistId, type: 'playlist' } as unknown as Json,
+            estimated_minutes: aiData.estimated_minutes || 30,
+            energy_level: aiData.energy_level,
+            ai_summary: aiData.ai_summary,
+            tags: aiData.tags,
+            status: 'inbox',
+          });
         }
       }
 
@@ -81,9 +106,32 @@ export async function POST(request: NextRequest) {
           status: 'inbox',
         });
       }
+
+      // If YouTube URL but neither video nor playlist (e.g. channel URL)
+      if (itemsToInsert.length === 0) {
+        const title = `YouTube: ${trimmedInput}`;
+        const aiData = await enrichItemWithAI({
+          title,
+          type: 'youtube',
+          estimatedMinutes: 20,
+        });
+
+        itemsToInsert.push({
+          user_id: userId,
+          type: 'youtube',
+          title,
+          url: normalizedUrl,
+          source_metadata: { url: normalizedUrl } as unknown as Json,
+          estimated_minutes: aiData.estimated_minutes || 20,
+          energy_level: aiData.energy_level,
+          ai_summary: aiData.ai_summary,
+          tags: aiData.tags,
+          status: 'inbox',
+        });
+      }
     } else if (isHttpUrl(trimmedInput)) {
       // 3. Article
-      const article = await parseArticle(trimmedInput);
+      const article = await parseArticle(normalizedUrl);
       const aiData = await enrichItemWithAI({
         title: article.title,
         type: 'article',
@@ -95,7 +143,7 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         type: 'article',
         title: article.title,
-        url: trimmedInput,
+        url: normalizedUrl,
         raw_content: article.rawContent,
         source_metadata: article.metadata as unknown as Json,
         estimated_minutes: aiData.estimated_minutes || article.estimatedMinutes,
@@ -130,11 +178,21 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Safety fallback: itemsToInsert will never be empty
     if (itemsToInsert.length === 0) {
-      return NextResponse.json(
-        { error: 'Не удалось обработать входящие данные' },
-        { status: 422 }
-      );
+      itemsToInsert.push({
+        user_id: userId,
+        type: 'custom_task',
+        title: trimmedInput,
+        url: isHttpUrl(trimmedInput) ? normalizedUrl : null,
+        raw_content: null,
+        source_metadata: { input: trimmedInput } as unknown as Json,
+        estimated_minutes: 15,
+        energy_level: 'medium',
+        ai_summary: 'Элемент бэклога',
+        tags: ['заметка'],
+        status: 'inbox',
+      });
     }
 
     // 5. Insert into Supabase

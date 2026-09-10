@@ -54,6 +54,7 @@ export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngest
           input: trimmed,
           customMinutes: isTask ? customMinutes : undefined,
           rawContent: isTask && notes.trim() ? notes.trim() : undefined,
+          type: detectedType !== 'unknown' ? detectedType : undefined,
         }),
       });
 

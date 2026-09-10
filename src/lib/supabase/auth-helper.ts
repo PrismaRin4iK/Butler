@@ -53,3 +53,28 @@ export async function getEffectiveUserId(): Promise<string> {
 
   return '00000000-0000-0000-0000-000000000000';
 }
+
+export interface EffectiveUserContext {
+  userId: string;
+  isGuest: boolean;
+  client: any;
+}
+
+export async function getEffectiveUserContext(): Promise<EffectiveUserContext> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user?.id) {
+      return { userId: user.id, isGuest: false, client: supabase };
+    }
+  } catch {
+    // Ignore error if invoked outside request scope
+  }
+
+  const admin = createAdminClient();
+  const userId = await getEffectiveUserId();
+  return { userId, isGuest: true, client: admin };
+}

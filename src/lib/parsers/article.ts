@@ -4,8 +4,17 @@ import { ArticleMetadata } from '../../types';
 
 export function isHttpUrl(input: string): boolean {
   try {
-    const url = new URL(input.trim());
-    return url.protocol === 'http:' || url.protocol === 'https:';
+    const trimmed = input.trim();
+    if (!trimmed || trimmed.includes(' ')) return false;
+    const withProto = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+    const url = new URL(withProto);
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.hostname.includes('.') &&
+      url.hostname.length > 3
+    );
   } catch {
     return false;
   }
@@ -13,7 +22,11 @@ export function isHttpUrl(input: string): boolean {
 
 export function extractDomain(urlStr: string): string {
   try {
-    const url = new URL(urlStr.trim());
+    const trimmed = urlStr.trim();
+    const withProto = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+    const url = new URL(withProto);
     return url.hostname.replace(/^www\./, '');
   } catch {
     return '';

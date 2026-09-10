@@ -2,7 +2,12 @@ import { YouTubeMetadata } from '../../types';
 
 export function isYouTubeUrl(input: string): boolean {
   try {
-    const url = new URL(input.trim());
+    const trimmed = input.trim();
+    if (!trimmed) return false;
+    const withProto = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+    const url = new URL(withProto);
     return (
       url.hostname.includes('youtube.com') ||
       url.hostname.includes('youtu.be')
@@ -15,29 +20,43 @@ export function isYouTubeUrl(input: string): boolean {
 export function extractYouTubeVideoId(input: string): string | null {
   try {
     const trimmed = input.trim();
-    if (!isYouTubeUrl(trimmed)) return null;
+    if (!trimmed) return null;
 
-    const url = new URL(trimmed);
+    // 1. Comprehensive regex for 11-char video ID across YouTube formats
+    const regexMatch = trimmed.match(
+      /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\/?\?v=|watch\/?\?.+&v=))([\w-]{11})/i
+    );
+    if (regexMatch && regexMatch[1]) {
+      return regexMatch[1];
+    }
 
-    // youtu.be/<id>
+    const withProto = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+
+    if (!isYouTubeUrl(withProto)) return null;
+
+    const url = new URL(withProto);
+
+    // 2. Query parameter 'v'
+    const vParam = url.searchParams.get('v');
+    if (vParam) {
+      const clean = vParam.split('&')[0];
+      return clean && clean.length >= 11 ? clean.slice(0, 11) : clean || null;
+    }
+
+    // 3. youtu.be/<id>
     if (url.hostname.includes('youtu.be')) {
-      const path = url.pathname.slice(1);
-      return path.split('/')[0] || null;
+      const path = url.pathname.replace(/^\/+/, '');
+      const id = path.split('/')[0]?.split('?')[0];
+      return id ? (id.length >= 11 ? id.slice(0, 11) : id) : null;
     }
 
-    // youtube.com/watch?v=<id>
-    if (url.pathname === '/watch') {
-      return url.searchParams.get('v');
-    }
-
-    // youtube.com/shorts/<id>
-    if (url.pathname.startsWith('/shorts/')) {
-      return url.pathname.split('/')[2] || null;
-    }
-
-    // youtube.com/embed/<id>
-    if (url.pathname.startsWith('/embed/')) {
-      return url.pathname.split('/')[2] || null;
+    // 4. Paths: /shorts/<id>, /live/<id>, /embed/<id>, /v/<id>
+    const segments = url.pathname.split('/').filter(Boolean);
+    if (segments.length >= 2 && ['shorts', 'live', 'embed', 'v'].includes(segments[0])) {
+      const id = segments[1].split('?')[0];
+      return id ? (id.length >= 11 ? id.slice(0, 11) : id) : null;
     }
 
     return null;
@@ -49,9 +68,20 @@ export function extractYouTubeVideoId(input: string): string | null {
 export function extractYouTubePlaylistId(input: string): string | null {
   try {
     const trimmed = input.trim();
-    if (!isYouTubeUrl(trimmed)) return null;
+    if (!trimmed) return null;
 
-    const url = new URL(trimmed);
+    const regexMatch = trimmed.match(/[?&]list=([\w-]+)/i);
+    if (regexMatch && regexMatch[1]) {
+      return regexMatch[1];
+    }
+
+    const withProto = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+
+    if (!isYouTubeUrl(withProto)) return null;
+
+    const url = new URL(withProto);
     return url.searchParams.get('list');
   } catch {
     return null;

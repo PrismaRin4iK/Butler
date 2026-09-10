@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { createAdminClient } from '../../../../lib/supabase/admin';
-import { getEffectiveUserId } from '../../../../lib/supabase/auth-helper';
+import { getEffectiveUserContext } from '../../../../lib/supabase/auth-helper';
 import { selectButlerRecommendation } from '../../../../lib/butler/engine';
 import { BacklogItem, EnergyLevel, ItemType, RecommendRequest } from '../../../../types';
 
@@ -24,12 +24,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
-    const userId = await getEffectiveUserId();
+    const { userId, client } = await getEffectiveUserContext();
 
     // Fetch inbox candidates from database
-     
-    let query: any = supabase
+    let query: any = client
       .from('backlog_items')
       .select('*')
       .eq('user_id', userId)
@@ -40,29 +38,9 @@ export async function POST(request: NextRequest) {
       query = query.eq('type', preferredType);
     }
 
-    const { data: initialData, error: initialError } = await query;
-    let items: BacklogItem[] | null = initialData as BacklogItem[] | null;
-    let error = initialError;
-
-    // Fallback to admin client if RLS blocked unauthenticated guest query
-    if (error || !items) {
-      const admin = createAdminClient();
-       
-      let adminQuery: any = admin
-        .from('backlog_items')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('status', 'inbox')
-        .lte('estimated_minutes', availableMinutes);
-
-      if (preferredType && preferredType !== 'all') {
-        adminQuery = adminQuery.eq('type', preferredType);
-      }
-
-      const adminRes = await adminQuery;
-      items = adminRes.data as BacklogItem[] | null;
-      error = adminRes.error;
-    }
+    const { data: queryData, error: queryError } = await query;
+    let items: BacklogItem[] | null = queryData as BacklogItem[] | null;
+    let error = queryError;
 
     if (error) {
       console.error('Error querying backlog items for recommendation:', error);
@@ -99,20 +77,12 @@ export async function POST(request: NextRequest) {
 
     // Update last_suggested_at timestamp
     const nowIso = new Date().toISOString();
-     
-    await (supabase.from('backlog_items') as any)
-      .update({ last_suggested_at: nowIso })
-      .eq('id', recommendation.item.id);
-
-    // Also update via admin in case user is guest
     try {
-      const admin = createAdminClient();
-       
-      await (admin.from('backlog_items') as any)
+      await (client.from('backlog_items') as any)
         .update({ last_suggested_at: nowIso })
         .eq('id', recommendation.item.id);
-    } catch {
-      // ignore
+    } catch (updateErr) {
+      console.warn('Could not update last_suggested_at:', updateErr);
     }
 
     return NextResponse.json({
