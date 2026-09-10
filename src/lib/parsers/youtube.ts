@@ -93,8 +93,7 @@ export async function fetchYouTubeVideoInfo(
   if (key) {
     try {
       const res = await fetch(
-        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${key}`,
-        { next: { revalidate: 3600 } }
+        `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${key}`
       );
 
       if (res.ok) {
