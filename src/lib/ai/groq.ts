@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import Groq from 'groq-sdk';
 import { EnergyLevel, ItemType } from '../../types';
 
 export interface AIEnrichmentResult {
@@ -9,19 +9,19 @@ export interface AIEnrichmentResult {
 }
 
 const SYSTEM_INSTRUCTION = `Ты — персональный дворецкий по управлению вниманием и бэклогом ("Butler").
-Твоя задача — объективно оценить поступивший материал (видео, статью или задачу) и вернуть строго валидный JSON без markdown-блоков (\`\`\`json) и лишнего текста.
+Твоя задача — объективно оценить поступивший материал (видео, статью или задачу) и вернуть строго валидный JSON.
 
 Критерии energy_level (когнитивная нагрузка):
 - "low": развлекательные видео, мемы, легкие новости, короткие простые заметки, отдых.
 - "medium": прикладные статьи, продуктовые обзоры технологий, стандартные бытовые дела, понятные гайды.
 - "high": сложная техническая документация, глубокие научные/философские лонгриды, архитектура, задачи требующие максимальной концентрации.
 
-Формат JSON:
+Формат ответа строго в формате JSON:
 {
   "energy_level": "low" | "medium" | "high",
   "tags": ["тег1", "тег2", "тег3"],
-  "ai_summary": "Ровно одно предложение на русском языке: почему это стоит открыть/сделать прямо сейчас, создающее интригу и мотивацию без спойлеров",
-  "estimated_minutes": число_минут_если_задача
+  "ai_summary": "Ровно одно предложение на русском языке: почему это стоит открыть/сделать прямо сейчас, создающее мотивацию без спойлеров",
+  "estimated_minutes": число_минут_если_задача_или_статья
 }`;
 
 export async function enrichItemWithAI(params: {
@@ -30,13 +30,13 @@ export async function enrichItemWithAI(params: {
   contentSnippet?: string;
   estimatedMinutes?: number;
 }): Promise<AIEnrichmentResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
 
   if (apiKey) {
     try {
-      const ai = new GoogleGenAI({ apiKey });
+      const groq = new Groq({ apiKey });
 
-      const prompt = `Проанализируй элемент бэклога:
+      const userPrompt = `Проанализируй элемент бэклога:
 Тип: ${params.type}
 Название: "${params.title}"
 ${params.contentSnippet ? `Контент (выдержка): "${params.contentSnippet.slice(0, 1500)}"` : ''}
@@ -44,21 +44,19 @@ ${params.estimatedMinutes ? `Расчетное время: ${params.estimatedMi
 
 Верни JSON с полями: energy_level, tags, ai_summary, estimated_minutes.`;
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          responseMimeType: 'application/json',
-          temperature: 0.3,
-        },
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: SYSTEM_INSTRUCTION },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
       });
 
-      const text = response.text?.trim();
+      const text = completion.choices[0]?.message?.content?.trim();
       if (text) {
-        // Strip any markdown code fences if present
-        const cleaned = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        const parsed = JSON.parse(cleaned);
+        const parsed = JSON.parse(text);
 
         const energyLevel: EnergyLevel = ['low', 'medium', 'high'].includes(parsed.energy_level)
           ? parsed.energy_level
@@ -68,9 +66,10 @@ ${params.estimatedMinutes ? `Расчетное время: ${params.estimatedMi
           ? parsed.tags.slice(0, 3).map((t: unknown) => String(t).trim().toLowerCase())
           : [];
 
-        const aiSummary = typeof parsed.ai_summary === 'string' && parsed.ai_summary.length > 0
-          ? parsed.ai_summary.trim()
-          : `Актуальный материал: «${params.title}».`;
+        const aiSummary =
+          typeof parsed.ai_summary === 'string' && parsed.ai_summary.length > 0
+            ? parsed.ai_summary.trim()
+            : `Актуальный материал: «${params.title}».`;
 
         const estimatedMinutes =
           typeof parsed.estimated_minutes === 'number' && parsed.estimated_minutes > 0
@@ -85,7 +84,7 @@ ${params.estimatedMinutes ? `Расчетное время: ${params.estimatedMi
         };
       }
     } catch (error) {
-      console.warn('Gemini API enrichment failed, falling back to heuristics:', error);
+      console.warn('Groq AI enrichment failed, falling back to heuristics:', error);
     }
   }
 

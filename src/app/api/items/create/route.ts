@@ -3,7 +3,7 @@ import { createClient } from '../../../../lib/supabase/server';
 import { createAdminClient } from '../../../../lib/supabase/admin';
 import { isYouTubeUrl, extractYouTubeVideoId, extractYouTubePlaylistId, fetchYouTubeVideoInfo, fetchYouTubePlaylistVideos } from '../../../../lib/parsers/youtube';
 import { isHttpUrl, parseArticle } from '../../../../lib/parsers/article';
-import { enrichItemWithAI } from '../../../../lib/ai/gemini';
+import { enrichItemWithAI } from '../../../../lib/ai/groq';
 import { BacklogItemInsert, ItemType, Json } from '../../../../types/database';
 
 export async function POST(request: NextRequest) {

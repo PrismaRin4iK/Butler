@@ -256,7 +256,7 @@ export default function HomePage() {
         isOpen={isIngestOpen}
         onClose={() => setIsIngestOpen(false)}
         onItemCreated={() => {
-          showToast('Материал сохранен и проанализирован Gemini!');
+          showToast('Материал сохранен и проанализирован Groq AI!');
           refreshStats();
         }}
       />

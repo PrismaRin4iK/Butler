@@ -187,7 +187,7 @@ export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngest
               <p className="text-[11px] text-slate-500 mt-1.5">
                 {customMinutes
                   ? `Выбрано ${customMinutes} мин.`
-                  : 'Если не выбрать, Gemini оценит длительность автоматически.'}
+                  : 'Если не выбрать, Groq AI оценит длительность автоматически.'}
               </p>
 
               {/* Optional task notes */}
@@ -210,7 +210,7 @@ export function QuickIngestModal({ isOpen, onClose, onItemCreated }: QuickIngest
           <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800/80 text-[11px] text-slate-400 flex items-start gap-2">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
             <span>
-              Gemini 2.5 Flash автоматически проанализирует контент, определит требуемый уровень энергии, добавит теги и сформулирует мотивирующий микро-хук.
+              Groq AI (Llama 3.3) молниеносно проанализирует контент, определит требуемый уровень энергии, добавит теги и сформулирует мотивирующий микро-хук.
             </span>
           </div>
 
