@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { createAdminClient } from '../../../../lib/supabase/admin';
+import { getEffectiveUserId } from '../../../../lib/supabase/auth-helper';
 import { selectButlerRecommendation } from '../../../../lib/butler/engine';
 import { BacklogItem, EnergyLevel, ItemType, RecommendRequest } from '../../../../types';
 
@@ -24,8 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = await getEffectiveUserId();
 
     // Fetch inbox candidates from database
      

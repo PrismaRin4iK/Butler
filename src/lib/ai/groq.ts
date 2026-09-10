@@ -44,17 +44,38 @@ ${params.estimatedMinutes ? `Расчетное время: ${params.estimatedMi
 
 Верни JSON с полями: energy_level, tags, ai_summary, estimated_minutes.`;
 
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: SYSTEM_INSTRUCTION },
-          { role: 'user', content: userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-      });
+      const candidateModels = [
+        'openai/gpt-oss-120b',
+        'qwen/qwen3.8-27b',
+        'openai/gpt-oss-20b',
+        'groq/compound-mini',
+      ];
 
-      const text = completion.choices[0]?.message?.content?.trim();
+      let text: string | undefined;
+
+      for (const model of candidateModels) {
+        try {
+          const completion = await groq.chat.completions.create({
+            model,
+            messages: [
+              { role: 'system', content: SYSTEM_INSTRUCTION },
+              { role: 'user', content: userPrompt },
+            ],
+            response_format: { type: 'json_object' },
+            temperature: 0.3,
+          });
+
+          text = completion.choices[0]?.message?.content?.trim();
+          if (text) break;
+        } catch (modelErr: unknown) {
+          const errObj = modelErr as { status?: number };
+          // If model is not found, try next candidate
+          if (errObj.status === 404) {
+            continue;
+          }
+          throw modelErr;
+        }
+      }
       if (text) {
         const parsed = JSON.parse(text);
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../../lib/supabase/server';
 import { createAdminClient } from '../../../../lib/supabase/admin';
+import { getEffectiveUserId } from '../../../../lib/supabase/auth-helper';
 import { isYouTubeUrl, extractYouTubeVideoId, extractYouTubePlaylistId, fetchYouTubeVideoInfo, fetchYouTubePlaylistVideos } from '../../../../lib/parsers/youtube';
 import { isHttpUrl, parseArticle } from '../../../../lib/parsers/article';
 import { enrichItemWithAI } from '../../../../lib/ai/groq';
@@ -21,28 +22,8 @@ export async function POST(request: NextRequest) {
     const trimmedInput = input.trim();
     const supabase = await createClient();
 
-    // 1. Get authenticated user
-    let userId: string | null = null;
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (user) {
-      userId = user.id;
-    } else {
-      // In local development or guest mode, fallback to demo/admin user
-      const demoId = '00000000-0000-0000-0000-000000000000';
-      userId = demoId;
-
-      // Ensure demo profile exists using admin client if configured
-      try {
-        const admin = createAdminClient();
-        await admin.from('profiles').upsert({
-          id: demoId,
-          email: 'demo@butler.app',
-        });
-      } catch (err) {
-        console.warn('Could not auto-create demo profile:', err);
-      }
-    }
+    // 1. Get authenticated or guest user ID
+    const userId = await getEffectiveUserId();
 
     // 2. Identify content type and parse
     const itemsToInsert: BacklogItemInsert[] = [];

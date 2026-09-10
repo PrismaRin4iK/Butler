@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '../../../lib/supabase/server';
 import { createAdminClient } from '../../../lib/supabase/admin';
+import { getEffectiveUserId } from '../../../lib/supabase/auth-helper';
 import { BacklogItem } from '../../../types';
 
 export async function GET(request: NextRequest) {
@@ -11,8 +12,7 @@ export async function GET(request: NextRequest) {
     const tag = searchParams.get('tag');
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id || '00000000-0000-0000-0000-000000000000';
+    const userId = await getEffectiveUserId();
 
      
     let query: any = supabase
