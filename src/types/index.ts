@@ -1,11 +1,6 @@
-import { Database, ItemType, EnergyLevel, ItemStatus } from './database';
+import { Database, ItemType, EnergyLevel, ItemStatus, BacklogItem, BacklogItemInsert, BacklogItemUpdate, Profile, ProfileInsert, ProfileUpdate } from './database';
 
-export type { ItemType, EnergyLevel, ItemStatus };
-
-export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type BacklogItem = Database['public']['Tables']['backlog_items']['Row'];
-export type BacklogItemInsert = Database['public']['Tables']['backlog_items']['Insert'];
-export type BacklogItemUpdate = Database['public']['Tables']['backlog_items']['Update'];
+export type { Database, ItemType, EnergyLevel, ItemStatus, BacklogItem, BacklogItemInsert, BacklogItemUpdate, Profile, ProfileInsert, ProfileUpdate };
 
 export interface YouTubeMetadata {
   video_id: string;
